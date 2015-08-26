@@ -1,0 +1,5 @@
+module BaseTestNext
+
+# package code goes here
+
+end # module
