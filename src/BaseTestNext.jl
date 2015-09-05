@@ -7,67 +7,84 @@ export @testset
 # All tests produce a result object, that may or may not be stored
 # depending on whether the test is part of a test set. Parameteric
 # on the test type (:test, :test_throws)
-abstract Result{T}
+abstract Result
 
 # Pass: condition was true
-immutable Pass{T} <: Result{T}
+immutable Pass <: Result
+    test_type::Symbol
     orig_expr::Expr
     expr::Expr
-    value::Bool
+    value
 end
-function Base.show(io::IO, t::Pass{:test})
+function Base.show(io::IO, t::Pass)
     print_with_color(:green, io, "Test Passed\n")
     print(io, "  Expression: ", t.orig_expr)
-    if t.expr.head == :comparison
+    if t.test_type == :test && t.expr.head == :comparison
         # The test was an expression, so display the term-by-term
         # evaluated version as well
         print(io, "\n   Evaluated: ", t.expr)
+    elseif t.test_type == :test_throws
+        # The correct type of exception was thrown
+        print(io, "\n      Thrown: ", t.value)
     end
 end
 
 # Fail: condition was false
-type Fail{T} <: Result{T}
+type Fail <: Result
+    test_type::Symbol
     orig_expr::Expr
     expr::Expr
-    value::Bool
+    value
 end
-function Base.show(io::IO, t::Fail{:test})
+function Base.show(io::IO, t::Fail)
     print_with_color(:red, io, "Test Failed\n")
     print(io, "  Expression: ", t.orig_expr)
-    if t.expr.head == :comparison
+    if t.test_type == :test && t.expr.head == :comparison
         # The test was an expression, so display the term-by-term
         # evaluated version as well
         print(io, "\n   Evaluated: ", t.expr)
+    elseif t.test_type == :test_throws
+        # Either no exception, or wrong exception
+        extest, occurred = t.value
+        print(io, "\n    Expected: ", extest)
+        print(io, "\n      Thrown: ", occurred)
     end
 end
 
 # Error: condition couldn't be evaluated due to an exception, or
 # the result of the test wasn't a Boolean
-type Error{T} <: Result{T}
+type Error <: Result
+    test_type::Symbol
     orig_expr::Expr
     value::Any
     backtrace::Any
 end
-function Base.show(io::IO, t::Error{:test_nonbool})
+function Base.show(io::IO, t::Error)
     print_with_color(:red, io, "Error During Test\n")
-    println(io, "  Expression evaluated to non-Boolean")
-    println(io, "  Expression: ", t.orig_expr)
-    print(  io, "       Value: ", t.value)
+    if t.test_type == :test_nonbool
+        println(io, "  Expression evaluated to non-Boolean")
+        println(io, "  Expression: ", t.orig_expr)
+        print(  io, "       Value: ", t.value)
+    elseif t.test_type == :test_error
+        println(io, "  Test threw an exception of type ", typeof(t.value))
+        println(io, "  Expression: ", t.orig_expr)
+        # Capture error message and indent to match
+        errmsg = sprint(showerror, t.value, t.backtrace)
+        print(io, join(map(line->string("  ",line),
+                            split(errmsg, "\n")), "\n"))
+    end
 end
-function Base.show(io::IO, t::Error{:test_error})
-    print_with_color(:red, io, "Error During Test\n")
-    println(io, "  Test threw an exception of type ", typeof(t.value))
-    println(io, "  Expression: ", t.orig_expr)
-    # Capture error message and indent to match
-    errmsg = sprint(showerror, t.value, t.backtrace)
-    print(io, join(map(line->string("  ",line),
-                        split(errmsg, "\n")), "\n"))
-end
+
 
 #-----------------------------------------------------------------------
 # @test - check if the expression evaluates to true
 # In the special case of a comparison, e.g. x == 5, evaluate each term
 # in the comparison individually so the results can be displayed
+"""
+@test ex
+
+Tests that the expression `ex` evaluates to `true`.
+"""
 macro test(ex)
     # If the test is a comparison
     if typeof(ex) == Expr && ex.head == :comparison
@@ -100,7 +117,6 @@ macro test(ex)
     end
 end
 
-
 function do_test(predicate, orig_expr)
     record(get_testset(),
     try
@@ -111,13 +127,43 @@ function do_test(predicate, orig_expr)
         # Ideally it is true, but it may be false or non-Boolean.
         expr, value = predicate()
         if isa(value, Bool)
-            value ? Pass{:test}(orig_expr,expr,value) :
-                    Fail{:test}(orig_expr,expr,value)
+            value ? Pass(:test, orig_expr, expr, value) :
+                    Fail(:test, orig_expr, expr, value)
         else
-            Error{:test_nonbool}(orig_expr,value,nothing)
+            Error(:test_nonbool, orig_expr, value, nothing)
         end
     catch err
-        Error{:test_error}(orig_expr,err,catch_backtrace())
+        Error(:test_error, orig_expr, err, catch_backtrace())
+    end)
+end
+
+
+#-----------------------------------------------------------------------
+# @test_throws - check if the expression causes an exception to be
+# thrown, and that the exception is of the correct type.
+"""
+@test_throws extype ex
+
+Tests that the expression `ex` throws an exception of type `extype`.
+"""
+macro test_throws(extype, ex)
+    :(do_test_throws( ()->($(esc(ex))), $(Expr(:quote,ex)),
+                      backtrace(), $(esc(extype)) ))
+end
+
+function do_test_throws(predicate, orig_expr, bt, extype)
+    record(get_testset(),
+    try
+        predicate()
+        # If we hit this line, no exception was thrown
+        Fail(:test_throws, orig_expr, orig_expr, (extype, nothing))
+    catch err
+        # Check the right type of exception was thrown
+        if isa(err, extype)
+            Pass(:test_throws, orig_expr, orig_expr, extype)
+        else
+            Fail(:test_throws, orig_expr, orig_expr, (extype,err))
+        end
     end)
 end
 

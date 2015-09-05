@@ -18,21 +18,23 @@ end
        end)
 =#
 
-println()
+#println()
 @testset "outer" begin
     @testset "inner1" begin
         @test 1 == 1
         @test 2 == 2
-        @test 3 == 0
-        @test 4 == 4
+        @test 3 == 3
+        @testset "d" begin
+          @test 4 == 4
+        end
     end
-    println()
+    #println()
     @testset "inner1" begin
         @test 1 == 1
         @test 2 == 2
-        @test 3 == 0
+        @test 3 == 3
         @test 4 == 4
     end
-    println()
+    #println()
 end
 

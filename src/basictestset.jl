@@ -7,24 +7,44 @@ end
 
 BasicTestSet() = BasicTestSet("", [])
 BasicTestSet(desc) = BasicTestSet(desc, [])
+
 record(ts::BasicTestSet, t::Pass) = push!(ts.results, t)
+
 function record(ts::BasicTestSet, t::Union(Fail,Error))
+    print_with_color(:white, ts.description, ": ")
     println(t)
     push!(ts.results, t)
 end
+
 record(ts::BasicTestSet, t::AbstractTestSet) = push!(ts.results, t)
+
 function finish(ts::BasicTestSet)
     # If we are a nested test set, do not print a full summary
     # now - let the parent test set do the printing
     if get_testset_depth() != 0
+        # Attach this test set to the parent test set
         parent_ts = get_testset()
         record(parent_ts, ts)
         return
     end
-    # Print a summary at every level
+    # Calculate the alignment of the test result counts
+    align = _get_alignment(ts, 0)
+    # Print the outer test set header once
     print_with_color(:white, "Test Summary:\n")
-    _print_counts(ts,0,0)
+    # Recursively print a summary at every level
+    _print_counts(ts, 0, align)
 end
+
+function _get_alignment(ts::BasicTestSet, depth::Int)
+    ts_width = 2*depth + length(ts.description)
+    for t in ts.results
+        if isa(t, BasicTestSet)
+            ts_width = max(ts_width, _get_alignment(t, depth+1))
+        end
+    end
+    ts_width
+end
+
 function _get_test_counts(ts::BasicTestSet)
     num_pass, num_fail, num_error = 0, 0, 0
     num_child_pass, num_child_fail, num_child_error = 0, 0, 0
@@ -42,7 +62,8 @@ function _get_test_counts(ts::BasicTestSet)
     return num_pass, num_fail, num_error,
             num_child_pass, num_child_fail, num_child_error
 end
-function _print_counts(ts::BasicTestSet, depth::Int, padding::Int)
+
+function _print_counts(ts::BasicTestSet, depth::Int, align::Int)
     # We must be the root test set
     # Count results by each type at this level, and recursively
     # through and child test sets
@@ -51,10 +72,10 @@ function _print_counts(ts::BasicTestSet, depth::Int, padding::Int)
             _get_test_counts(ts)
     num_test = num_pass + num_fail + num_error +
                 num_child_pass + num_child_fail + num_child_error
-    num_test == 0 && return
 
-    # Print test set header
-    print("  "^depth, rpad(ts.description, padding, " "), " |  ")
+    # Print test set header, with an alignment that ensures all
+    # the test results appear above each other
+    print(rpad(string("  "^depth, ts.description), align, " "), " |  ")
 
     np = num_pass + num_child_pass
     if np > 0
@@ -71,20 +92,14 @@ function _print_counts(ts::BasicTestSet, depth::Int, padding::Int)
         print_with_color(:red, "Error: ")
         @printf("%d (%5.1f %%)  ", ne, ne/num_test*100)
     end
+    if np == 0 && nf == 0 && ne == 0
+        print_with_color(:blue, "No tests")
+    end
     println()
 
-    # Line up all the counts across test sets by padding descriptions
-    # with whitespace
-    max_desc_len = 0
     for t in ts.results
         if isa(t, BasicTestSet)
-            max_desc_len = max(max_desc_len, length(t.description))
-        end
-    end
-
-    for t in ts.results
-        if isa(t, BasicTestSet)
-            _print_counts(t, depth + 1, max_desc_len)
+            _print_counts(t, depth + 1, align)
         end
     end
 end
