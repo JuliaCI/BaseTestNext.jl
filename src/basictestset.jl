@@ -80,23 +80,22 @@ function _print_counts(ts::BasicTestSet, depth::Int, align::Int)
     np = num_pass + num_child_pass
     if np > 0
         print_with_color(:green, "Pass: ")
-        @printf("%d (%5.1f %%)  ", np, np/num_test*100)
+        @printf("%d/%d  ", np, num_test, np/num_test*100)
     end
     nf = num_fail + num_child_fail
     if nf > 0
         print_with_color(:red, "Fail: ")
-        @printf("%d (%5.1f %%)  ", nf, nf/num_test*100)
+        @printf("%d/%d  ", nf, num_test)
     end
     ne = num_error + num_child_error
     if ne > 0
         print_with_color(:red, "Error: ")
-        @printf("%d (%5.1f %%)  ", ne, ne/num_test*100)
+        @printf("%d/%d  ", ne, num_test)
     end
     if np == 0 && nf == 0 && ne == 0
         print_with_color(:blue, "No tests")
     end
     println()
-
     for t in ts.results
         if isa(t, BasicTestSet)
             _print_counts(t, depth + 1, align)
