@@ -3,6 +3,10 @@ module BaseTestNext
 export @test, @test_throws
 export @testset, @testloop
 
+settings = Dict{Symbol, Any}(
+    :verbose_depth => Inf,
+)
+
 #-----------------------------------------------------------------------
 # All tests produce a result object, that may or may not be stored
 # depending on whether the test is part of a test set. Parameteric

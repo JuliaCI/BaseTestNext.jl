@@ -29,8 +29,6 @@ function finish(ts::BasicTestSet)
     end
     # Calculate the alignment of the test result counts
     align = _get_alignment(ts, 0)
-    # Print the outer test set header once
-    print_with_color(:white, "Test Summary:\n")
     # Recursively print a summary at every level
     _print_counts(ts, 0, align)
 end
@@ -72,7 +70,19 @@ function _print_counts(ts::BasicTestSet, depth::Int, align::Int)
             _get_test_counts(ts)
     num_test = num_pass + num_fail + num_error +
                 num_child_pass + num_child_fail + num_child_error
+    any_bad = num_child_fail > 0 || num_child_error > 0 ||
+            num_fail > 0 || num_error > 0
 
+    # Print the outer test set header at the top level, only if we're going to
+    # end up printing some results
+    if depth == 0 && (settings[:verbose_depth] > 0 || any_bad)
+        print_with_color(:white, "Test Summary:\n")
+    end
+    # top-level results have a depth of 0, but correspond to a verbose_depth
+    # setting of 1
+    if depth + 1 > settings[:verbose_depth] && !any_bad
+        return
+    end
     # Print test set header, with an alignment that ensures all
     # the test results appear above each other
     print(rpad(string("  "^depth, ts.description), align, " "), " |  ")
