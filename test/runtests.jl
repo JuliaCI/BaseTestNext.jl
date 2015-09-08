@@ -36,5 +36,19 @@ end
         @test 4 == 4
     end
     #println()
-end
 
+    @testset "loop with desc" begin
+        @testloop "loop1 $T" for T in (Float32, Float64)
+            @test 1 == T(1)
+        end
+    end
+    @testset "loops without desc" begin
+        @testloop for T in (Float32, Float64)
+            @test 1 == T(1)
+        end
+        @testloop for T in (Float32, Float64), S in (Int32,Int64)
+            @test S(1) == T(1)
+        end
+    end
+
+end
