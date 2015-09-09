@@ -50,5 +50,31 @@ end
             @test S(1) == T(1)
         end
     end
+end
 
+@testset "should print" verbosity=0 begin
+    @testset "should not print" begin
+        @test 1 == 1
+        @test 2 == 2
+        @test 3 == 3
+        @testset "should not print" begin
+          @test 4 == 4
+        end
+    end
+    # this should print because a child will print
+    @testset "should print" begin
+        @test 1 == 1
+        @test 2 == 2
+        @test 3 == 3
+        @testset "should print" verbosity=1 begin
+          @test 4 == 4
+        end
+    end
+    # this should print because it has an error
+    @testset "should print" begin
+        @test 1 == 1
+        @test 2 == 1
+        @test 3 == 3
+        @test 4 == 4
+    end
 end
