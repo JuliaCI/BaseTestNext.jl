@@ -38,6 +38,7 @@ include("basictestset.jl")
 
 #-----------------------------------------------------------------------
 """
+@testset "description" option1=val1 begin ... end
 @testset "description" begin ... end
 @testset begin ... end
 
@@ -46,23 +47,29 @@ BasicTestSet, the test results will be recorded and displayed at the end
 of the test set. If there are any failures, an exception will be thrown.
 """
 macro testset(args...)
+    options = Dict{Symbol, Any}()
+    desc = ""
     # Parse arguments to do determine if any options passed in
-    if length(args) == 2
-        # Looks like description format
-        desc, tests = args
-        !isa(desc,String) && error("Unexpected argument to @testset")
-    elseif length(args) == 1
-        # No description provided
-        desc, tests = "", args[1]
-    elseif length(args) >= 3
-        error("Too many arguments to @testset")
+    if length(args) == 0
+        error("@testset requires a test expression")
     else
-        error("Too few arguments to @testset")
+        # assume the last (and possibly only) argument is the test expression
+        tests = args[end]
+        for arg in args[1:end-1]
+            if isa(arg, String)
+                desc = arg
+            elseif isa(arg, Expr) && arg.head == :(=)
+                # we have an assignment. assume it's setting an argument
+                options[arg.args[1]] = eval(arg.args[2])
+            else
+                error("Unexpected argument $arg to @testset")
+            end
+        end
     end
 
     ts = gensym()
     quote
-        $ts = BasicTestSet($desc)
+        $ts = BasicTestSet($desc; $options...)
         add_testset($ts)
         $(esc(tests))
         pop_testset()
