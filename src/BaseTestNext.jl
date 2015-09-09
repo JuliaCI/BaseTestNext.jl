@@ -1,7 +1,7 @@
 module BaseTestNext
 
 export @test, @test_throws
-export @testset
+export @testset, @testloop
 
 #-----------------------------------------------------------------------
 # All tests produce a result object, that may or may not be stored
