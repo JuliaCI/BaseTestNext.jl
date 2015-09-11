@@ -4,6 +4,11 @@ sprint(show, @test true)
 sprint(show, @test 10 == 2*5)
 sprint(show, @test !false)
 
+@testset "no errors" begin
+    @test true
+    @test 1 == 1
+end
+
 try
 
 @testset "outer" begin

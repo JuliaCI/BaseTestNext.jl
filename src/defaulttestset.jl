@@ -85,7 +85,9 @@ function finish(ts::DefaultTestSet)
     # Recursively print a summary at every level
     print_counts(ts, 0, align, pass_width, fail_width, error_width, total_width)
     # Finally throw an error as we are the outermost test set
-    throw(TestSetException(total_pass,total_fail,total_error))
+    if total != total_pass
+        throw(TestSetException(total_pass,total_fail,total_error))
+    end
 end
 
 # Recursive function that finds the column that the result counts
