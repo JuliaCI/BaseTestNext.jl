@@ -7,12 +7,12 @@ If using the DefaultTestSet, the test results will be recorded. If there
 are any `Fail`s or `Error`s, an exception will be thrown only at the end,
 along with a summary of the test results.
 """
-immutable DefaultTestSet <: AbstractTestSet
+type DefaultTestSet <: AbstractTestSet
     description::AbstractString
     results::Vector
+    anynonpass::Bool
 end
-DefaultTestSet() = DefaultTestSet("", [])
-DefaultTestSet(desc) = DefaultTestSet(desc, [])
+DefaultTestSet(desc) = DefaultTestSet(desc, [], false)
 
 # For a passing result, simply store the result
 record(ts::DefaultTestSet, t::Pass) = (push!(ts.results, t); t)
@@ -43,9 +43,6 @@ function finish(ts::DefaultTestSet)
         record(parent_ts, ts)
         return
     end
-    # Calculate the alignment of the test result counts by
-    # recursively walking the tree of test sets
-    align = get_alignment(ts, 0)
     # Calculate the overall number for each type so each of
     # the test result types are aligned
     passes, fails, errors, c_passes, c_fails, c_errors = get_test_counts(ts)
@@ -60,6 +57,9 @@ function finish(ts::DefaultTestSet)
     fail_width  = dig_fail  > 0 ? max(length("Fail"),  dig_fail)  : 0
     error_width = dig_error > 0 ? max(length("Error"), dig_error) : 0
     total_width = dig_total > 0 ? max(length("Total"), dig_total) : 0
+    # Calculate the alignment of the test result counts by
+    # recursively walking the tree of test sets
+    align = max(get_alignment(ts, 0), length("Test Summary:"))
     # Print the outer test set header once
     print_with_color(:white, rpad("Test Summary:",align," "))
     print(" | ")
@@ -85,10 +85,14 @@ end
 
 # Recursive function that finds the column that the result counts
 # can begin at by taking into account the width of the descriptions
-# and the amount of indentation
+# and the amount of indentation. If a test set had no failures, and
+# no failures in child test sets, there is no need to include those
+# in calculating the alignment
 function get_alignment(ts::DefaultTestSet, depth::Int)
     # The minimum width at this depth is...
     ts_width = 2*depth + length(ts.description)
+    # If all passing, no need to look at children
+    !ts.anynonpass && return ts_width
     # Return the maximum of this width and the minimum width
     # for all children (if they exist)
     length(ts.results) == 0 && return ts_width
@@ -113,6 +117,7 @@ function get_test_counts(ts::DefaultTestSet)
             c_errors += ne + nce
         end
     end
+    ts.anynonpass = (fails + errors + c_fails + c_errors > 0)
     return passes, fails, errors, c_passes, c_fails, c_errors
 end
 
@@ -144,7 +149,7 @@ function print_counts(ts::DefaultTestSet, depth, align,
         # No fails at this level, but some at another level
         print(" "^fail_width, "  ")
     end
-    
+
     ne = errors + c_errors
     if ne > 0
         print_with_color(:red, lpad(string(ne), error_width, " "), "  ")
@@ -152,7 +157,7 @@ function print_counts(ts::DefaultTestSet, depth, align,
         # No errors at this level, but some at another level
         print(" "^error_width, "  ")
     end
-    
+
     if np == 0 && nf == 0 && ne == 0
         print_with_color(:blue, "No tests")
     else

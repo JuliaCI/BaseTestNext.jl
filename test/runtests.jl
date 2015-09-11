@@ -44,4 +44,10 @@ sprint(show, @test !false)
             @test S(1) == T(1)
         end
     end
+    srand(123)
+    @testset "some loops fail" begin
+        @testloop for i in 1:5
+            @test i <= rand(1:10)
+        end
+    end
 end
