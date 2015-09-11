@@ -46,10 +46,13 @@ function finish(ts::DefaultTestSet)
     # Calculate the overall number for each type so each of
     # the test result types are aligned
     passes, fails, errors, c_passes, c_fails, c_errors = get_test_counts(ts)
-    dig_pass  = passes + c_passes > 0 ? ndigits(passes + c_passes) : 0
-    dig_fail  = fails  + c_fails  > 0 ? ndigits(fails  + c_fails)  : 0
-    dig_error = errors + c_errors > 0 ? ndigits(errors + c_errors) : 0
-    total = passes + c_passes + fails  + c_fails + errors + c_errors
+    total_pass  = passes + c_passes
+    total_fail  = fails  + c_fails
+    total_error = errors + c_errors
+    dig_pass  = total_pass  > 0 ? ndigits(total_pass) : 0
+    dig_fail  = total_fail  > 0 ? ndigits(total_fail)  : 0
+    dig_error = total_error > 0 ? ndigits(total_error) : 0
+    total = total_pass + total_fail + total_error
     dig_total = total > 0 ? ndigits(total) : 0
     # For each category, take max of digits and header width if there are
     # tests of that type
@@ -81,6 +84,8 @@ function finish(ts::DefaultTestSet)
     println()
     # Recursively print a summary at every level
     print_counts(ts, 0, align, pass_width, fail_width, error_width, total_width)
+    # Finally throw an error as we are the outermost test set
+    throw(TestSetException(total_pass,total_fail,total_error))
 end
 
 # Recursive function that finds the column that the result counts

@@ -4,6 +4,8 @@ sprint(show, @test true)
 sprint(show, @test 10 == 2*5)
 sprint(show, @test !false)
 
+try
+
 @testset "outer" begin
     @testset "inner1" begin
         @test true
@@ -50,4 +52,13 @@ sprint(show, @test !false)
             @test i <= rand(1:10)
         end
     end
+end
+    
+    # This line shouldn't be called
+    error("No exception was thrown!")
+catch ex
+    @test isa(ex, BaseTestNext.TestSetException)
+    @test ex.pass  == 21
+    @test ex.fail  == 5
+    @test ex.error == 2
 end

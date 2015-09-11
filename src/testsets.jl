@@ -7,6 +7,23 @@
 #   Called after the test set has been popped from the test set stack
 abstract AbstractTestSet
 
+"""
+TestSetException
+
+Thrown when a test set finishes and not all tests passed.
+"""
+type TestSetException <: Exception
+    pass::Int
+    fail::Int
+    error::Int
+end
+function Base.show(io::IO, ex::TestSetException)
+    print(io, "Some tests did not pass: ")
+    print(io, ex.pass,  " passed, ")
+    print(io, ex.fail,  " failed, ")
+    print(io, ex.error, " errored.")
+end
+
 #-----------------------------------------------------------------------
 
 """
