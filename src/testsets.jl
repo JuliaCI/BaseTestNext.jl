@@ -53,7 +53,7 @@ macro testset(args...)
         !isa(desc, AbstractString) && error("Unexpected argument to @testset")
     elseif length(args) == 1
         # No description provided
-        desc, tests = "", args[1]
+        desc, tests = "test set", args[1]
     elseif length(args) >= 3
         error("Too many arguments to @testset")
     else

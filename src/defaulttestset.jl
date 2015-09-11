@@ -160,10 +160,13 @@ function print_counts(ts::DefaultTestSet, depth, align,
     end
     println()
 
-    for t in ts.results
-        if isa(t, DefaultTestSet)
-            print_counts(t, depth + 1, align,
-                            pass_width, fail_width, error_width, total_width)
+    # Only print results at lower levels if we had failures
+    if np != subtotal
+        for t in ts.results
+            if isa(t, DefaultTestSet)
+                print_counts(t, depth + 1, align,
+                                pass_width, fail_width, error_width, total_width)
+            end
         end
     end
 end

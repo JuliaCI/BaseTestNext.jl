@@ -1,6 +1,5 @@
 using BaseTestNext
 
-# Print a pass
 sprint(show, @test true)
 sprint(show, @test 10 == 2*5)
 sprint(show, @test !false)
@@ -45,5 +44,4 @@ sprint(show, @test !false)
             @test S(1) == T(1)
         end
     end
-
 end
