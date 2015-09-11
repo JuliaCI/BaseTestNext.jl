@@ -68,13 +68,16 @@ the correct exception was not thrown.
 type Fail <: Result
     test_type::Symbol
     orig_expr
-    expr::Expr
+    expr
     value
 end
 function Base.show(io::IO, t::Fail)
     print_with_color(:red, io, "Test Failed\n")
     print(io, "  Expression: ", t.orig_expr)
-    if t.test_type == :test && t.expr.head == :comparison
+    if !isa(t.expr, Expr)
+        # Maybe just a constant, like false
+        print(io, "\n   Evaluated: ", t.expr)
+    elseif t.test_type == :test && t.expr.head == :comparison
         # The test was an expression, so display the term-by-term
         # evaluated version as well
         print(io, "\n   Evaluated: ", t.expr)

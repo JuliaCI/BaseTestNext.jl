@@ -104,7 +104,7 @@ function print_counts(ts::BasicTestSet, depth, align,
 
     # Print test set header, with an alignment that ensures all
     # the test results appear above each other
-    print(rpad(string("  "^depth, ts.description), align, " "), " |  ")
+    print(rpad(string("  "^depth, ts.description), align, " "), " | ")
 
     np = passes + c_passes
     if np > 0

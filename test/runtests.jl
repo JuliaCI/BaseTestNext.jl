@@ -1,5 +1,10 @@
 using BaseTestNext
 
+# Print a pass
+sprint(show, @test true)
+sprint(show, @test 10 == 2*5)
+sprint(show, @test !false)
+
 @testset "outer" begin
     @testset "inner1" begin
         @test true
@@ -10,12 +15,17 @@ using BaseTestNext
         @testset "d" begin
             @test 4 == 4
         end
+        @testset begin
+            @test :blank != :notblank
+        end
     end
     @testset "inner1" begin
         @test 1 == 1
         @test 2 == 2
         @test 3 == :bar
         @test 4 == 4
+        @test_throws ErrorException 1+1
+        @test_throws ErrorException error()
         @testset "errrrr" begin
             @test "not bool"
             @test error()
