@@ -54,10 +54,33 @@ function finish(ts::DefaultTestSet)
     dig_error = errors + c_errors > 0 ? ndigits(errors + c_errors) : 0
     total = passes + c_passes + fails  + c_fails + errors + c_errors
     dig_total = total > 0 ? ndigits(total) : 0
+    # For each category, take max of digits and header width if there are
+    # tests of that type
+    pass_width  = dig_pass  > 0 ? max(length("Pass"),  dig_pass)  : 0
+    fail_width  = dig_fail  > 0 ? max(length("Fail"),  dig_fail)  : 0
+    error_width = dig_error > 0 ? max(length("Error"), dig_error) : 0
+    total_width = dig_total > 0 ? max(length("Total"), dig_total) : 0
     # Print the outer test set header once
-    print_with_color(:white, "Test Summary:\n")
+    print_with_color(:white, rpad("Test Summary:",align," "))
+    print(" | ")
+    if pass_width > 0
+        print_with_color(:green, lpad("Pass",pass_width," "))
+        print("  ")
+    end
+    if fail_width > 0
+        print_with_color(:red, lpad("Fail",fail_width," "))
+        print("  ")
+    end
+    if error_width > 0
+        print_with_color(:red, lpad("Error",error_width," "))
+        print("  ")
+    end
+    if total_width > 0
+        print_with_color(:blue, lpad("Total",total_width," "))
+    end
+    println()
     # Recursively print a summary at every level
-    print_counts(ts, 0, align, dig_pass, dig_fail, dig_error, dig_total)
+    print_counts(ts, 0, align, pass_width, fail_width, error_width, total_width)
 end
 
 # Recursive function that finds the column that the result counts
@@ -96,7 +119,7 @@ end
 # Recursive function that prints out the results at each level of
 # the tree of test sets
 function print_counts(ts::DefaultTestSet, depth, align,
-                        dig_pass, dig_fail, dig_error, dig_total)
+                        pass_width, fail_width, error_width, total_width)
     # Count results by each type at this level, and recursively
     # through and child test sets
     passes, fails, errors, c_passes, c_fails, c_errors = get_test_counts(ts)
@@ -108,42 +131,39 @@ function print_counts(ts::DefaultTestSet, depth, align,
 
     np = passes + c_passes
     if np > 0
-        print_with_color(:green, "Pass: ")
-        print(lpad(string(np), dig_pass, " "), "  ")
-    elseif dig_pass > 0
+        print_with_color(:green, lpad(string(np), pass_width, " "), "  ")
+    elseif pass_width > 0
         # No passes at this level, but some at another level
-        print(" "^(8 + dig_pass))
+        print(" "^pass_width, "  ")
     end
 
     nf = fails + c_fails
     if nf > 0
-        print_with_color(:red, "Fail: ")
-        print(lpad(string(nf), dig_fail, " "), "  ")
-    elseif dig_fail > 0
+        print_with_color(:red, lpad(string(nf), fail_width, " "), "  ")
+    elseif fail_width > 0
         # No fails at this level, but some at another level
-        print(" "^(8 + dig_fail))
+        print(" "^fail_width, "  ")
     end
+    
     ne = errors + c_errors
     if ne > 0
-        print_with_color(:red, "Error: ")
-        print(lpad(string(ne), dig_error, " "), "  ")
-    elseif dig_error > 0
+        print_with_color(:red, lpad(string(ne), error_width, " "), "  ")
+    elseif error_width > 0
         # No errors at this level, but some at another level
-        print(" "^(9 + dig_error))
+        print(" "^error_width, "  ")
     end
     
     if np == 0 && nf == 0 && ne == 0
         print_with_color(:blue, "No tests")
     else
-        print_with_color(:blue, "Total: ")
-        print(lpad(string(subtotal), dig_total, " "), "  ")
+        print_with_color(:blue, lpad(string(subtotal), total_width, " "))
     end
     println()
 
     for t in ts.results
         if isa(t, DefaultTestSet)
             print_counts(t, depth + 1, align,
-                            dig_pass, dig_fail, dig_error, dig_total)
+                            pass_width, fail_width, error_width, total_width)
         end
     end
 end
