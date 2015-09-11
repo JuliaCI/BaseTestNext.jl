@@ -1,41 +1,26 @@
 using BaseTestNext
-#=
-macro foo(ex)
-   dump(ex)
-   for e in ex.args
-       if isa(e, LineNumberNode)
-           return :($(e.line))
-       elseif (e.head == :line)
-           return :($(e.args[1]))
-       end
-   end
-end
-#@foo (1==2)
-@show (@foo begin
-           1+1
-           2+2
-           3+3
-       end)
-=#
 
-#println()
 @testset "outer" begin
     @testset "inner1" begin
+        @test true
+        @test false
         @test 1 == 1
-        @test 2 == 2
+        @test 2 == :foo
         @test 3 == 3
         @testset "d" begin
-          @test 4 == 4
+            @test 4 == 4
         end
     end
-    #println()
     @testset "inner1" begin
         @test 1 == 1
         @test 2 == 2
-        @test 3 == 3
+        @test 3 == :bar
         @test 4 == 4
+        @testset "errrrr" begin
+            @test "not bool"
+            @test error()
+        end
     end
-    #println()
 
     @testset "loop with desc" begin
         @testloop "loop1 $T" for T in (Float32, Float64)

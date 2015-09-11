@@ -1,9 +1,5 @@
-# All tests belong to a test set. There is a default, task-level
-# test set that throws on first failure. Users can wrap their tests in
-# nested test sets to achieve other behaviours like not failing
-# immediately or writing test results in special formats.
+# This file is a part of Julia. License is MIT: http://julialang.org/license
 
-#-----------------------------------------------------------------------
 # The AbstractTestSet interface is defined by two methods:
 # record(AbstractTestSet, Result)
 #   Called by do_test after a test is evaluated
@@ -11,46 +7,51 @@
 #   Called after the test set has been popped from the test set stack
 abstract AbstractTestSet
 
-
 #-----------------------------------------------------------------------
-# We provide a simple fallback test set that throws immediately on a
-# failure, but otherwise doesn't do much
+
+"""
+DefaultTestSet
+
+A simple fallback test set that throws immediately on a failure.
+"""
 immutable DefaultTestSet <: AbstractTestSet
 end
 default_testset = DefaultTestSet()
 
-# Records nothing, and throws any immediately error whenever an error
-# or failure occurs. Does nothing for passing tests.
+# Records nothing, and throws an error immediately whenever a Fail or
+# Error occurs. Takes no action in the event of a Pass result
 record(ts::DefaultTestSet, t::Pass) = t
 function record(ts::DefaultTestSet, t::Union(Fail,Error))
     println(t)
     error("There was an error during testing")
+    t
 end
-# Does nothing
+# We don't need to do anything as we don't record anything
 finish(ts::DefaultTestSet) = nothing
 
-
 #-----------------------------------------------------------------------
+
 # We provide a basic test set that stores results, and doesn't throw
 # any exceptions until the end of the test set.
 include("basictestset.jl")
 
-
 #-----------------------------------------------------------------------
+
 """
 @testset "description" begin ... end
 @testset begin ... end
 
 Starts a new test set, by default using the BasicTestSet. If using the
-BasicTestSet, the test results will be recorded and displayed at the end
-of the test set. If there are any failures, an exception will be thrown.
+BasicTestSet, the test results will be recorded. If there are any
+`Fail`s or `Error`s, an exception will be thrown only at the end, along
+with a summary of the test results.
 """
 macro testset(args...)
     # Parse arguments to do determine if any options passed in
     if length(args) == 2
         # Looks like description format
         desc, tests = args
-        !isa(desc,String) && error("Unexpected argument to @testset")
+        !isa(desc, String) && error("Unexpected argument to @testset")
     elseif length(args) == 1
         # No description provided
         desc, tests = "", args[1]
@@ -59,7 +60,10 @@ macro testset(args...)
     else
         error("Too few arguments to @testset")
     end
-
+    # Generate a block of code that initializes a new testset, adds
+    # it to the task local storage, evaluates the test(s), before
+    # finally removing the testset and giving it a change to take
+    # action (such as reporting the results)
     ts = gensym()
     quote
         $ts = BasicTestSet($desc)
@@ -71,12 +75,13 @@ macro testset(args...)
 end
 
 
-
 """
 @testloop "description \$v" for v in (...) ... end
 @testloop for x in (...), y in (...) ... end
 
-Starts a new test set, for each iteration of the loop. The description string accepts interpolation from the loop indices. If no description is provided, one is constructed based on the variables.
+Starts a new test set for each iteration of the loop. The description
+string accepts interpolation from the loop indices. If no description
+is provided, one is constructed based on the variables.
 """
 macro testloop(args...)
     # Parse arguments to do determine if any options passed in
@@ -111,6 +116,8 @@ macro testloop(args...)
         error("Too few arguments to @testloop")
     end
     
+    # Uses a similar block as for `@testset`, except that it is
+    # wrapped in the outer loop provided by the user
     ts = gensym()
     tests = testloop.args[2]  
     blk = quote
@@ -125,7 +132,8 @@ end
 
 
 #-----------------------------------------------------------------------
-# Define various helper methods for test sets
+# Various helper methods for test sets
+
 """
 get_testset()
 
