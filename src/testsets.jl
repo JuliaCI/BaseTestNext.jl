@@ -50,7 +50,7 @@ macro testset(args...)
     if length(args) == 2
         # Looks like description format
         desc, tests = args
-        !isa(desc, String) && error("Unexpected argument to @testset")
+        !isa(desc, AbstractString) && error("Unexpected argument to @testset")
     elseif length(args) == 1
         # No description provided
         desc, tests = "", args[1]
@@ -87,7 +87,7 @@ macro testloop(args...)
     if length(args) == 2
         # Looks like description format
         desc, testloop = args        
-        isa(desc,String) || (isa(desc,Expr) && desc.head == :string) || error("Unexpected argument to @testloop")
+        isa(desc,AbstractString) || (isa(desc,Expr) && desc.head == :string) || error("Unexpected argument to @testloop")
         isa(testloop,Expr) && testloop.head == :for || error("Unexpected argument to @testloop")
 
     elseif length(args) == 1
