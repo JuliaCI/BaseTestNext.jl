@@ -7,9 +7,9 @@ Simple unit testing functionality:
 * `@test_throws`
 
 All tests belong to a *test set*. There is a default, task-level
-test set that throws on the first failure. Users can wrap their tests
-in (nested) test sets to achieve other behaviours like not failing
-immediately or writing test results in special formats. See:
+test set that throws on the first failure. Users can choose to wrap
+their tests in (possibly nested) test sets that will store results
+and summarize them at the end of the test set. See:
 
 * `@testset`
 * `@testloop`

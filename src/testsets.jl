@@ -10,30 +10,30 @@ abstract AbstractTestSet
 #-----------------------------------------------------------------------
 
 """
-DefaultTestSet
+FallbackTestSet
 
 A simple fallback test set that throws immediately on a failure.
 """
-immutable DefaultTestSet <: AbstractTestSet
+immutable FallbackTestSet <: AbstractTestSet
 end
-default_testset = DefaultTestSet()
+fallback_testset = FallbackTestSet()
 
 # Records nothing, and throws an error immediately whenever a Fail or
 # Error occurs. Takes no action in the event of a Pass result
-record(ts::DefaultTestSet, t::Pass) = t
-function record(ts::DefaultTestSet, t::Union(Fail,Error))
+record(ts::FallbackTestSet, t::Pass) = t
+function record(ts::FallbackTestSet, t::Union(Fail,Error))
     println(t)
     error("There was an error during testing")
     t
 end
 # We don't need to do anything as we don't record anything
-finish(ts::DefaultTestSet) = nothing
+finish(ts::FallbackTestSet) = nothing
 
 #-----------------------------------------------------------------------
 
-# We provide a basic test set that stores results, and doesn't throw
+# We provide a default test set that stores results, and doesn't throw
 # any exceptions until the end of the test set.
-include("basictestset.jl")
+include("defaulttestset.jl")
 
 #-----------------------------------------------------------------------
 
@@ -41,10 +41,9 @@ include("basictestset.jl")
 @testset "description" begin ... end
 @testset begin ... end
 
-Starts a new test set, by default using the BasicTestSet. If using the
-BasicTestSet, the test results will be recorded. If there are any
-`Fail`s or `Error`s, an exception will be thrown only at the end, along
-with a summary of the test results.
+Starts a new test set. The test results will be recorded, and if there
+are any `Fail`s or `Error`s, an exception will be thrown only at the end,
+along with a summary of the test results.
 """
 macro testset(args...)
     # Parse arguments to do determine if any options passed in
@@ -66,7 +65,7 @@ macro testset(args...)
     # action (such as reporting the results)
     ts = gensym()
     quote
-        $ts = BasicTestSet($desc)
+        $ts = DefaultTestSet($desc)
         add_testset($ts)
         $(esc(tests))
         pop_testset()
@@ -121,7 +120,7 @@ macro testloop(args...)
     ts = gensym()
     tests = testloop.args[2]  
     blk = quote
-        $ts = BasicTestSet($(esc(desc)))
+        $ts = DefaultTestSet($(esc(desc)))
         add_testset($ts)
         $(esc(tests))
         pop_testset()
@@ -142,7 +141,7 @@ test set is active, use the fallback default test set.
 """
 function get_testset()
     testsets = get(task_local_storage(), :__BASETESTNEXT__, AbstractTestSet[])
-    return length(testsets) == 0 ? default_testset : testsets[end]
+    return length(testsets) == 0 ? fallback_testset : testsets[end]
 end
 
 """
@@ -164,7 +163,7 @@ active test sets, returns the default test set.
 """
 function pop_testset()
     testsets = get(task_local_storage(), :__BASETESTNEXT__, AbstractTestSet[])
-    ret = length(testsets) == 0 ? default_testset : pop!(testsets)
+    ret = length(testsets) == 0 ? fallback_testset : pop!(testsets)
     setindex!(task_local_storage(), testsets, :__BASETESTNEXT__)
     return ret
 end

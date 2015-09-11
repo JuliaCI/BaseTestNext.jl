@@ -1,24 +1,24 @@
 # This file is a part of Julia. License is MIT: http://julialang.org/license
 
 """
-BasicTestSet
+DefaultTestSet
 
-If using the BasicTestSet, the test results will be recorded. If there
+If using the DefaultTestSet, the test results will be recorded. If there
 are any `Fail`s or `Error`s, an exception will be thrown only at the end,
 along with a summary of the test results.
 """
-immutable BasicTestSet <: AbstractTestSet
+immutable DefaultTestSet <: AbstractTestSet
     description::String
     results::Vector
 end
-BasicTestSet() = BasicTestSet("", [])
-BasicTestSet(desc) = BasicTestSet(desc, [])
+DefaultTestSet() = DefaultTestSet("", [])
+DefaultTestSet(desc) = DefaultTestSet(desc, [])
 
 # For a passing result, simply store the result
-record(ts::BasicTestSet, t::Pass) = (push!(ts.results, t); t)
+record(ts::DefaultTestSet, t::Pass) = (push!(ts.results, t); t)
 # For the other result types, immediately print the error message
 # but do not terminate. Print a backtrace.
-function record(ts::BasicTestSet, t::Union(Fail,Error))
+function record(ts::DefaultTestSet, t::Union(Fail,Error))
     print_with_color(:white, ts.description, ": ")
     print(t)
     Base.show_backtrace(STDOUT, backtrace())
@@ -27,14 +27,14 @@ function record(ts::BasicTestSet, t::Union(Fail,Error))
     t
 end
 
-# When a BasicTestSet finishes, it records itself to its parent
+# When a DefaultTestSet finishes, it records itself to its parent
 # testset, if there is one. This allows for recursive printing of
 # the results at the end of the tests
-record(ts::BasicTestSet, t::AbstractTestSet) = push!(ts.results, t)
+record(ts::DefaultTestSet, t::AbstractTestSet) = push!(ts.results, t)
 
 # Called at the end of a @testset, behaviour depends on whether
 # this is a child of another testset, or the "root" testset
-function finish(ts::BasicTestSet)
+function finish(ts::DefaultTestSet)
     # If we are a nested test set, do not print a full summary
     # now - let the parent test set do the printing
     if get_testset_depth() != 0
@@ -63,7 +63,7 @@ end
 # Recursive function that finds the column that the result counts
 # can begin at by taking into account the width of the descriptions
 # and the amount of indentation
-function get_alignment(ts::BasicTestSet, depth::Int)
+function get_alignment(ts::DefaultTestSet, depth::Int)
     # The minimum width at this depth is...
     ts_width = 2*depth + length(ts.description)
     # Return the maximum of this width and the minimum width
@@ -76,14 +76,14 @@ get_alignment(ts, depth::Int) = 0
 
 # Recursive function that counts the number of test results of each
 # type directly in the testset, and totals across the child testsets
-function get_test_counts(ts::BasicTestSet)
+function get_test_counts(ts::DefaultTestSet)
     passes, fails, errors = 0, 0, 0
     c_passes, c_fails, c_errors = 0, 0, 0
     for t in ts.results
         isa(t, Pass)  && (passes += 1)
         isa(t, Fail)  && (fails  += 1)
         isa(t, Error) && (errors += 1)
-        if isa(t, BasicTestSet)
+        if isa(t, DefaultTestSet)
             np, nf, ne, ncp, ncf, nce = get_test_counts(t)
             c_passes += np + ncp
             c_fails  += nf + ncf
@@ -95,7 +95,7 @@ end
 
 # Recursive function that prints out the results at each level of
 # the tree of test sets
-function print_counts(ts::BasicTestSet, depth, align,
+function print_counts(ts::DefaultTestSet, depth, align,
                         dig_pass, dig_fail, dig_error, dig_total)
     # Count results by each type at this level, and recursively
     # through and child test sets
@@ -141,7 +141,7 @@ function print_counts(ts::BasicTestSet, depth, align,
     println()
 
     for t in ts.results
-        if isa(t, BasicTestSet)
+        if isa(t, DefaultTestSet)
             print_counts(t, depth + 1, align,
                             dig_pass, dig_fail, dig_error, dig_total)
         end
