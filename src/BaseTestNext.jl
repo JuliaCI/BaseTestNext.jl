@@ -55,7 +55,7 @@ function Base.show(io::IO, t::Pass)
         print(io, "\n   Evaluated: ", t.expr)
     elseif t.test_type == :test_throws
         # The correct type of exception was thrown
-        print(io, "\n      Thrown: ", t.value)
+        print(io, "\n      Thrown: ", typeof(t.value))
     end
 end
 
@@ -74,18 +74,17 @@ end
 function Base.show(io::IO, t::Fail)
     print_with_color(:red, io, "Test Failed\n")
     print(io, "  Expression: ", t.orig_expr)
-    if !isa(t.expr, Expr)
+    if t.test_type == :test_throws
+        # Either no exception, or wrong exception
+        print(io, "\n    Expected: ", t.expr)
+        print(io, "\n      Thrown: ", typeof(t.value))
+    elseif !isa(t.expr, Expr)
         # Maybe just a constant, like false
         print(io, "\n   Evaluated: ", t.expr)
     elseif t.test_type == :test && t.expr.head == :comparison
         # The test was an expression, so display the term-by-term
         # evaluated version as well
         print(io, "\n   Evaluated: ", t.expr)
-    elseif t.test_type == :test_throws
-        # Either no exception, or wrong exception
-        extest, occurred = t.value
-        print(io, "\n    Expected: ", extest)
-        print(io, "\n      Thrown: ", occurred)
     end
 end
 
@@ -98,8 +97,8 @@ it evaluated to something other than a `Bool`.
 type Error <: Result
     test_type::Symbol
     orig_expr
-    value::Any
-    backtrace::Any
+    value
+    backtrace
 end
 function Base.show(io::IO, t::Error)
     print_with_color(:red, io, "Error During Test\n")
@@ -210,13 +209,13 @@ function do_test_throws(predicate, orig_expr, bt, extype)
         predicate()
         # If we hit this line, no exception was thrown. We treat
         # this as equivalent to the wrong exception being thrown.
-        Fail(:test_throws, orig_expr, orig_expr, (extype, nothing))
+        Fail(:test_throws, orig_expr, extype, nothing)
     catch err
         # Check the right type of exception was thrown
         if isa(err, extype)
-            Pass(:test_throws, orig_expr, orig_expr, extype)
+            Pass(:test_throws, orig_expr, extype, err)
         else
-            Fail(:test_throws, orig_expr, orig_expr, (extype,err))
+            Fail(:test_throws, orig_expr, extype, err)
         end
     end)
 end
