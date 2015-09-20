@@ -38,7 +38,7 @@ fallback_testset = FallbackTestSet()
 # Records nothing, and throws an error immediately whenever a Fail or
 # Error occurs. Takes no action in the event of a Pass result
 record(ts::FallbackTestSet, t::Pass) = t
-function record(ts::FallbackTestSet, t::Union(Fail,Error))
+function record(ts::FallbackTestSet, t::Union{Fail,Error})
     println(t)
     error("There was an error during testing")
     t

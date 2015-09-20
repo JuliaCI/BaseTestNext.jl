@@ -18,7 +18,7 @@ DefaultTestSet(desc) = DefaultTestSet(desc, [], false)
 record(ts::DefaultTestSet, t::Pass) = (push!(ts.results, t); t)
 # For the other result types, immediately print the error message
 # but do not terminate. Print a backtrace.
-function record(ts::DefaultTestSet, t::Union(Fail,Error))
+function record(ts::DefaultTestSet, t::Union{Fail,Error})
     print_with_color(:white, ts.description, ": ")
     print(t)
     Base.show_backtrace(STDOUT, backtrace())
