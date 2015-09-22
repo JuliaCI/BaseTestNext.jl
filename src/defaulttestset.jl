@@ -15,10 +15,15 @@ end
 DefaultTestSet(desc) = DefaultTestSet(desc, [], false)
 
 # For a passing result, simply store the result
-record(ts::DefaultTestSet, t::Pass) = (push!(ts.results, t); t)
+function record(ts::DefaultTestSet, t::Pass)
+    print_with_color(:green, ".")
+    push!(ts.results, t)
+    t
+end
 # For the other result types, immediately print the error message
 # but do not terminate. Print a backtrace.
 function record(ts::DefaultTestSet, t::Union{Fail,Error})
+    println()
     print_with_color(:white, ts.description, ": ")
     print(t)
     Base.show_backtrace(STDOUT, backtrace())
@@ -64,6 +69,7 @@ function finish(ts::DefaultTestSet)
     # recursively walking the tree of test sets
     align = max(get_alignment(ts, 0), length("Test Summary:"))
     # Print the outer test set header once
+    println()
     print_with_color(:white, rpad("Test Summary:",align," "))
     print(" | ")
     if pass_width > 0
