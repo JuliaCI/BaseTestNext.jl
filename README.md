@@ -9,6 +9,10 @@ such as `Test.with_handler` were removed, and many new features
 were added. This package provides the new `Base.Test` functionality
 so that packages that are supporting Julia `v0.4` can use them.
 
+For documentation, please refer to the
+[Julia manual](http://docs.julialang.org/en/latest/stdlib/test/).
+
+
 ### Usage
 
 Replace `using Base.Test` with:
