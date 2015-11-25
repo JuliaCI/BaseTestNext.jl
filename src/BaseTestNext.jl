@@ -496,9 +496,9 @@ If no custom testset type is given it defaults to creating a `DefaultTestSet`.
 along with a summary of the test results.
 
 Any custom testset type (subtype of `AbstractTestSet`) can be given and it will
-also be used for any nested `@testset` or `@testloop` invocations. The given
-options are only applied to the test set where they are given. The default test
-set type does not take any options.
+also be used for any nested `@testset` invocations. The given options are only
+applied to the test set where they are given. The default test set type does
+not take any options.
 
 The description string accepts interpolation from the loop indices.
 If no description is provided, one is constructed based on the variables.
@@ -575,7 +575,7 @@ function testset_forloop(args, testloop)
             push!(loopvars, loopvar)
         end
     else
-        error("Unexpected argument to @testloop")
+        error("Unexpected argument to @testset")
     end
 
     desc, testsettype, options = parse_testset_args(args[1:end-1])
@@ -615,10 +615,9 @@ function testset_forloop(args, testloop)
 end
 
 """
-Parse the arguments to the `@testset` or `@testloop` macro to pull out
-the description, Testset Type, and options. Generally this should be called
-with all the macro arguments except the last one, which is the test expression
-itself.
+Parse the arguments to the `@testset` macro to pull out the description,
+Testset Type, and options. Generally this should be called with all the macro
+arguments except the last one, which is the test expression itself.
 """
 function parse_testset_args(args)
     desc = nothing
