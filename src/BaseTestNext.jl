@@ -315,7 +315,10 @@ record(ts::DefaultTestSet, t::Pass) = (push!(ts.results, t); t)
 function record(ts::DefaultTestSet, t::Union{Fail,Error})
     print_with_color(:white, ts.description, ": ")
     print(t)
-    Base.show_backtrace(STDOUT, backtrace())
+    # printing Errors already prints the backtrace of the error
+    if typeof(t) != Error
+        Base.show_backtrace(STDOUT, backtrace())
+    end
     println()
     push!(ts.results, t)
     t
