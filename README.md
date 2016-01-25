@@ -1,7 +1,7 @@
 # BaseTestNext
 
-[![Build Status](https://travis-ci.org/IainNZ/BaseTestNext.jl.svg?branch=master)](https://travis-ci.org/IainNZ/BaseTestNext.jl)
-[![codecov.io](http://codecov.io/github/IainNZ/BaseTestNext.jl/coverage.svg?branch=master)](http://codecov.io/github/IainNZ/BaseTestNext.jl?branch=master)
+[![Build Status](https://travis-ci.org/JuliaCI/BaseTestNext.jl.svg?branch=master)](https://travis-ci.org/JuliaCI/BaseTestNext.jl)
+[![codecov.io](http://codecov.io/github/JuliaCI/BaseTestNext.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaCI/BaseTestNext.jl?branch=master)
 
 [![BaseTestNext](http://pkg.julialang.org/badges/BaseTestNext_0.4.svg)](http://pkg.julialang.org/?pkg=BaseTestNext)
 [![BaseTestNext](http://pkg.julialang.org/badges/BaseTestNext_0.5.svg)](http://pkg.julialang.org/?pkg=BaseTestNext)
@@ -30,6 +30,6 @@ end
 ```
 
 See also
-[BaseTestDeprecated.jl](https://github.com/IainNZ/BaseTestDeprecated.jl),
+[BaseTestDeprecated.jl](https://github.com/JuliaCI/BaseTestDeprecated.jl),
 which provides the Julia `v0.4`-and-earlier `Base.Test` for packages that
 support Julia `v0.5` and use one of the removed features.
