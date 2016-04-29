@@ -21,7 +21,7 @@ For documentation, please refer to the
 Replace `using Base.Test` with:
 
 ```julia
-if VERSION >= v"0.5-"
+if VERSION >= v"0.5.0-dev+7720"
     using Base.Test
 else
     using BaseTestNext
